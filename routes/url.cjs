@@ -12,7 +12,6 @@ router.get('/about', (req, res) => {
     res.send('This is about page');
 });
 
-// CORRECTED: Changed the POST route from '/' to '/url' to match frontend
 router.post('/url', handleGenereateNewShortUrl);
 
 router.get('/analytics/:shortId', handleAnalytics);
