@@ -9,16 +9,20 @@ const PORT = 5000;
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 // MongoDB connection
 const connectMongodb = require('./connectDb/urlConnection.cjs');
 connectMongodb('mongodb://127.0.0.1:27017/url-Shortner')
 
 // Routes
 const urlRoute = require('./routes/url.cjs');
+// Serve static frontend
+app.get('/', (req, res) => {
+  res.render('index');
+});
 app.use('/', urlRoute);
 
-// Serve static frontend
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Handle unknown routes (for refreshing in frontend)
 // app.get('*', (req, res) => {
