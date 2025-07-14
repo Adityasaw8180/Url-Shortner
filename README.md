@@ -9,9 +9,9 @@ Shorten long URLs into short IDs<br>
 
 Redirect to original URL using short ID<br>
 
- Track visit history (with timestamp)<br>
+Track visit history (with timestamp)<br>
 
- View total visit analytics for each short URL<br>
+View total visit analytics for each short URL<br>
 <hr>
  Tech Stack<br>
 Node.js<br>

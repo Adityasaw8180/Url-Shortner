@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuickLink - URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#6366F1",
+              secondary: "#10B981",
+            },
+            borderRadius: {
+              button: "8px",
+            },
+            fontFamily: {
+              sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .fade-in { animation: fadeIn 0.3s ease-in-out; }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .scale-hover { transition: transform 0.2s ease-in-out; }
+      .scale-hover:hover { transform: scale(1.02); }
+      .success-pulse {
+        animation: successPulse 0.3s ease-in-out;
+      }
+      @keyframes successPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 font-sans min-h-screen">
+    <!-- HEADER -->
+    <header class="bg-white shadow-sm border-b border-gray-100">
+      <div class="max-w-6xl mx-auto px-6 py-6 flex items-center">
+        <div class="w-8 h-8 flex items-center justify-center bg-primary rounded-lg mr-3">
+          <i class="ri-links-line text-white text-lg"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900">QuickLink</h1>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="max-w-4xl mx-auto px-6 py-12">
+      <!-- Heading -->
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold text-gray-900 mb-4">Shorten Your URLs Instantly</h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Transform long, complex URLs into short, shareable links in seconds.
+        </p>
+      </div>
+
+      <!-- URL FORM -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 mb-12">
+        <form id="urlForm" class="space-y-6">
+          <input
+            type="url"
+            id="urlInput"
+            placeholder="Paste your long URL here..."
+            class="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none"
+            required
+          />
+          <button
+            type="submit"
+            class="w-full bg-primary text-white font-semibold py-4 px-8 rounded-button scale-hover text-lg"
+          >
+            <span class="flex items-center justify-center">
+              <i class="ri-scissors-line mr-2"></i> Shorten URL
+            </span>
+          </button>
+        </form>
+      </div>
+
+      <!-- SHORTENED RESULT -->
+      <div id="resultSection" class="bg-white rounded-2xl shadow-lg p-8 mb-12 hidden fade-in">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">Your Shortened URL</h3>
+        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+          <code id="shortUrl" class="text-primary font-mono text-lg flex-1 mr-4"></code>
+          <button
+            id="copyBtn"
+            class="bg-secondary text-white px-6 py-2 rounded-button scale-hover font-medium"
+          >
+            <i class="ri-file-copy-line mr-2"></i> Copy
+          </button>
+        </div>
+        <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+          <p class="text-sm text-gray-600"><strong>Original URL:</strong> <span id="originalUrl" class="break-all"></span></p>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-900">Recent Links</h3>
+          <button id="clearHistory" class="text-gray-500 hover:text-red-500">
+            <i class="ri-delete-bin-line text-xl"></i>
+          </button>
+        </div>
+        <div id="historyList" class="space-y-4 text-center text-gray-500 py-8">
+          <i class="ri-history-line text-2xl mb-3"></i>
+          <p>No shortened URLs yet. Create your first one above!</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-gray-100 mt-20">
+      <div class="max-w-6xl mx-auto px-6 py-8 text-center text-gray-600">
+        &copy; 2025 QuickLink. Built with ❤️ for better link sharing.
+      </div>
+    </footer>
+
+    <!-- SCRIPT -->
+    <script>
+      const API_BASE_URL = "http://localhost:5000";
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const urlForm = document.getElementById("urlForm");
+        const urlInput = document.getElementById("urlInput");
+        const resultSection = document.getElementById("resultSection");
+        const shortUrl = document.getElementById("shortUrl");
+        const originalUrl = document.getElementById("originalUrl");
+        const copyBtn = document.getElementById("copyBtn");
+        const historyList = document.getElementById("historyList");
+        const clearHistory = document.getElementById("clearHistory");
+
+        let urlHistory = JSON.parse(localStorage.getItem("urlHistory") || "[]");
+
+        urlForm.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const longUrl = urlInput.value.trim();
+          if (!longUrl) return;
+
+          try {
+            const res = await fetch(`${API_BASE_URL}/url`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ url: longUrl }),
+            });
+
+            if (!res.ok) throw new Error("API Error");
+
+            const data = await res.json();
+            const shortened = `${API_BASE_URL}/${data.shortId}`;
+
+            shortUrl.textContent = shortened;
+            originalUrl.textContent = longUrl;
+            resultSection.classList.remove("hidden");
+            resultSection.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            addToHistory(longUrl, shortened);
+            urlInput.value = "";
+          } catch (error) {
+            alert("Failed to shorten URL. Please check your backend.");
+            console.error(error);
+          }
+        });
+
+        copyBtn.addEventListener("click", function () {
+          copyToClipboard(shortUrl.textContent, this);
+        });
+
+        clearHistory.addEventListener("click", function () {
+          if (confirm("Clear all history?")) {
+            urlHistory = [];
+            localStorage.removeItem("urlHistory");
+            renderHistory();
+          }
+        });
+
+        function addToHistory(original, shortened) {
+          const entry = {
+            id: Date.now(),
+            original,
+            shortened,
+            date: new Date().toLocaleDateString(),
+          };
+          urlHistory.unshift(entry);
+          if (urlHistory.length > 5) urlHistory = urlHistory.slice(0, 5);
+          localStorage.setItem("urlHistory", JSON.stringify(urlHistory));
+          renderHistory();
+        }
+
+        function renderHistory() {
+          if (urlHistory.length === 0) {
+            historyList.innerHTML = `
+              <i class="ri-history-line text-2xl mb-3"></i>
+              <p>No shortened URLs yet. Create your first one above!</p>`;
+            return;
+          }
+
+          historyList.innerHTML = urlHistory.map(entry => `
+            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+              <div class="flex items-center justify-between">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-gray-500 mb-1">Original</p>
+                  <p class="text-gray-900 truncate mb-2">${entry.original}</p>
+                  <p class="text-sm text-gray-500 mb-1">Shortened</p>
+                  <code class="text-primary font-mono text-sm">${entry.shortened}</code>
+                </div>
+                <button class="copy-history-btn ml-4 bg-gray-100 hover:bg-secondary hover:text-white px-4 py-2 rounded-button" data-url="${entry.shortened}">
+                  <i class="ri-file-copy-line mr-2"></i> Copy
+                </button>
+              </div>
+              <p class="text-xs text-gray-400 mt-2">${entry.date}</p>
+            </div>
+          `).join("");
+
+          document.querySelectorAll(".copy-history-btn").forEach(btn => {
+            btn.addEventListener("click", function () {
+              copyToClipboard(this.dataset.url, this);
+            });
+          });
+        }
+
+        function copyToClipboard(text, button) {
+          navigator.clipboard.writeText(text).then(() => {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = `<i class="ri-check-line mr-2"></i> Copied!`;
+            button.classList.add("success-pulse");
+            setTimeout(() => {
+              button.innerHTML = originalHTML;
+              button.classList.remove("success-pulse");
+            }, 2000);
+          });
+        }
+
+        renderHistory();
+      });
+    </script>
+  </body>
+</html>

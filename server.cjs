@@ -1,17 +1,31 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const path = require('path');
+const cors = require('cors');
+
 const app = express();
 const PORT = 5000;
 
-const urlRouter = require('./routes/url.cjs');
-const connectMongo = require('./connectDb/urlConnection.cjs');
-
-// ✅ Middleware to parse JSON body — must come BEFORE routes
+// Middleware
 app.use(express.json());
+app.use(cors());
+// MongoDB connection
+const connectMongodb = require('./connectDb/urlConnection.cjs');
+connectMongodb('mongodb://127.0.0.1:27017/url-Shortner')
 
-app.use('/api/url', urlRouter);
+// Routes
+const urlRoute = require('./routes/url.cjs');
+app.use('/', urlRoute);
 
-connectMongo('mongodb://127.0.0.1:27017/url-Shortner');
+// Serve static frontend
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Handle unknown routes (for refreshing in frontend)
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// });
+
+// Start server
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running at http://localhost:${PORT}`);
 });
