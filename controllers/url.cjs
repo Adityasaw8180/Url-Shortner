@@ -43,9 +43,35 @@ async function handleRedirectByShortId(req, res) {
    }
 }
 
+async function handleAnalytics(req, res) {
+   const shortId = req.params.shortId;
+   if (!shortId) {
+      return res.status(400).send('Please send shortId');
+   }
 
+   try {
+      const entry = await URL.findOne({ shortId });
+
+      if (!entry) {
+         return res.status(404).send('Short URL not found');
+      }
+      
+      const visits = entry.visitHistory.map(visit => ({
+         visitedAt: visit.timestamp.toString()  
+      }));
+
+      return res.json({
+         totalVisits: visits.length,
+         visits
+      });
+   }
+   catch (error) {
+      console.error('Error while redirecting:', error);
+      return res.status(500).send('Internal Server Error');
+   }
+}
 module.exports = {
    handleGenereateNewShortUrl,
    handleRedirectByShortId,
-   
+   handleAnalytics
 }
