@@ -18,6 +18,34 @@ async function handleGenereateNewShortUrl(req, res) {
    return res.json({ shortId: shortID });
 }
 
+async function handleRedirectByShortId(req, res) {
+   const shortId = req.params.shortId;
+
+   if (!shortId) {
+      return res.status(400).send('Please send shortId');
+   }
+
+   try {
+      const entry = await URL.findOne({ shortId });
+
+      if (!entry) {
+         return res.status(404).send('Short URL not found');
+      }
+      entry.visitHistory.push({ timestamp: new Date() });
+
+      await entry.save();
+
+      return res.redirect(entry.redirectURL);
+   }
+   catch (error) {
+      console.error('Error while redirecting:', error);
+      return res.status(500).send('Internal Server Error');
+   }
+}
+
+
 module.exports = {
-   handleGenereateNewShortUrl
+   handleGenereateNewShortUrl,
+   handleRedirectByShortId,
+   
 }
