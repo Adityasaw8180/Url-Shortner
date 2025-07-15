@@ -22,5 +22,7 @@ MongoDB + Mongoose<br>
 
 shortid (for generating short URLs)<br>
 
+.ejs view engine (for static files rendering )<br>
+
 Nodemon (for development)<br>
 <hr>
